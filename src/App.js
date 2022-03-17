@@ -1,23 +1,133 @@
-import logo from './logo.svg';
-import './App.css';
+import './App.scss';
+
+import { getFirebaseData, performCoolerOperations } from './apis';
+import { useEffect, useState } from 'react';
+
+import { Logs } from './Logs';
+import { Switch } from './Switch';
+
+const FAN_SPEED_SEQUENCE = ['off', 'high', 'mid', 'low'];
+
+const initialState = {
+  fan: false,
+  fanSpeed: 'off',
+  swing: false,
+  cool: false,
+  onoff: false,
+  mosquitto: false,
+  synced: false,
+  logs: []
+};
 
 function App() {
+  const [data, setData] = useState(initialState);
+  const [enableUI, setEnableUI] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      let resp = await getFirebaseData();
+      resp.fan = resp.fanSpeed === 'off' ? false : true;
+      resp.logs = Object.values(resp.logs).reverse()
+      setData(resp);
+      setEnableUI(resp.onoff ? resp.synced : false);
+
+    }, 6000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const setFanValue = () => {
+    let val = 'off';
+    const fanSpeed = data.fanSpeed;
+    const fanSpeedIndex = FAN_SPEED_SEQUENCE.indexOf(fanSpeed);
+    val = FAN_SPEED_SEQUENCE[fanSpeedIndex === 3 ? 0 : fanSpeedIndex + 1];
+    return val;
+  }
+
+  const handleOnOff = (e, name = '') => {
+
+    let payload = {};
+
+    if (name === 'Fan') {
+      const fanVal = setFanValue();
+      setData({
+        ...data,
+        fan: fanVal === 'off' ? false : true,
+        fanSpeed: fanVal
+      });
+
+      payload = {
+        controlName: 'fanSpeed',
+        value: fanVal
+      };
+
+    } else if (name === 'Power') {
+      const val = e.target.checked;
+      setData(val ? {
+        ...data,
+        onoff: e.target.checked
+      } : initialState);
+
+      payload = {
+        controlName: 'onoff',
+        value: e.target.checked
+      };
+
+    } else {
+      setData({
+        ...data,
+        [name.toLocaleLowerCase()]: e.target.checked
+      });
+
+      payload = {
+        controlName: name.toLocaleLowerCase(),
+        value: e.target.checked
+      };
+    }
+    setEnableUI(false);
+    performCoolerOperations(payload);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      <div className='controls'>
+        <Switch
+          isOn={data.onoff}
+          handleOnOff={(e) => handleOnOff(e, 'Power')}
+          name='Power'
+        />
+
+        <Switch
+          enabled={enableUI}
+          isOn={data.fan}
+          fanSpeed={data.fanSpeed}
+          handleOnOff={(e) => handleOnOff(e, 'Fan')}
+          name='Fan'
+        />
+
+        <Switch
+          enabled={enableUI}
+          isOn={data.cool}
+          handleOnOff={(e) => handleOnOff(e, 'Cool')}
+          name='Cool'
+        />
+
+        <Switch
+          enabled={enableUI}
+          isOn={data.swing}
+          handleOnOff={(e) => handleOnOff(e, 'Swing')}
+          name='Swing'
+        />
+
+        <Switch
+          enabled={enableUI}
+          isOn={data.mosquitto}
+          handleOnOff={(e) => handleOnOff(e, 'Mosquitto')}
+          name='Mosquitto'
+        />
+
+      </div>
+      <Logs logs={data.logs} />
     </div>
   );
 }
