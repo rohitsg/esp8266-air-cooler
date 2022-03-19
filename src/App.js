@@ -22,6 +22,7 @@ const initialState = {
 function App() {
   const [data, setData] = useState(initialState);
   const [enableUI, setEnableUI] = useState(false);
+  const [enablePowerBtn, setEnablePowerBtn] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -30,7 +31,7 @@ function App() {
       resp.logs = Object.values(resp.logs).reverse()
       setData(resp);
       setEnableUI(resp.onoff ? resp.synced : false);
-
+      setEnablePowerBtn(resp.synced);
     }, 6000);
 
     return () => clearInterval(timer);
@@ -45,7 +46,6 @@ function App() {
   }
 
   const handleOnOff = (e, name = '') => {
-
     let payload = {};
 
     if (name === 'Fan') {
@@ -85,6 +85,7 @@ function App() {
       };
     }
     setEnableUI(false);
+    setEnablePowerBtn(false);
     performCoolerOperations(payload);
   }
 
@@ -92,6 +93,7 @@ function App() {
     <div className="container">
       <div className='controls'>
         <Switch
+          enabled={enablePowerBtn}
           isOn={data.onoff}
           handleOnOff={(e) => handleOnOff(e, 'Power')}
           name='Power'
@@ -106,21 +108,21 @@ function App() {
         />
 
         <Switch
-          enabled={enableUI}
+          enabled={enableUI && data.fan}
           isOn={data.cool}
           handleOnOff={(e) => handleOnOff(e, 'Cool')}
           name='Cool'
         />
 
         <Switch
-          enabled={enableUI}
+          enabled={enableUI && data.fan}
           isOn={data.swing}
           handleOnOff={(e) => handleOnOff(e, 'Swing')}
           name='Swing'
         />
 
         <Switch
-          enabled={enableUI}
+          enabled={enableUI && data.fan}
           isOn={data.mosquitto}
           handleOnOff={(e) => handleOnOff(e, 'Mosquitto')}
           name='Mosquitto'

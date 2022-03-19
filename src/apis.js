@@ -7,7 +7,7 @@ export const getFirebaseData = async () => {
     const data = await resp.json();
     return data;
   } catch (error) {
-    console.error('Error occured while fetching cooler details: ', error);
+    console.error('Error occurred while fetching cooler details: ', error);
   }
 }
 
@@ -23,6 +23,6 @@ export const performCoolerOperations = async (payload) => {
       body: JSON.stringify(payload)
     });
   } catch (error) {
-    console.error('Error occured while fetching cooler details: ', error);
+    console.error('Error occurred while fetching cooler details: ', error);
   }
 }

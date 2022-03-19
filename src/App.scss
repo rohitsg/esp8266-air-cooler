@@ -32,7 +32,7 @@
         width: 60px;
         height: 34px;
 
-        &[data-enabled=false]:not([data-name=Power]) {
+        &[data-enabled=false] {
           user-select: none;
           pointer-events: none;
           border: 2px solid red;
